@@ -90,7 +90,7 @@ class Transformer(Module):
         
         output[-1] = x
         
-        return x
+        return output
     
     def zero_all_memory(self):
         for block in self.blocks:

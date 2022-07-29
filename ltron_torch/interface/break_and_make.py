@@ -9,7 +9,7 @@ from torch.nn.functional import cross_entropy, binary_cross_entropy_with_logits
 
 import tqdm
 
-from conspiracy.log import SynchronousConsecutiveLog
+from conspiracy.log import Log
 
 from splendor.image import save_image
 
@@ -54,6 +54,7 @@ class BreakAndMakeInterface:
     
     @staticmethod
     def make_train_log(checkpoint=None):
+        '''
         train_log = SynchronousConsecutiveLog(
             'table_spatial_loss',
             'table_polarity_loss',
@@ -68,18 +69,37 @@ class BreakAndMakeInterface:
         )
         if checkpoint is not None:
             train_log.set_state(checkpoint)
+        '''
+        
+        train_log = {
+            'table_spatial_loss' : Log(1024),
+            'table_polarity_loss' : Log(1024),
+            'hand_spatial_loss' : Log(1024),
+            'hand_polarity_loss' : Log(1024),
+            'shape_loss' : Log(1024),
+            'color_loss' : Log(1024),
+            'mode_loss' : Log(1024),
+            'total_loss' : Log(1024),
+        }
+        if checkpoint is not None:
+            for key, log in train_log:
+                log.set_state(checkpoint[key])
         
         return train_log
     
     @staticmethod
     def make_test_log(checkpoint=None):
+        '''
         test_log = SynchronousConsecutiveLog(
             'terminal_reward',
             compressed = False,
         )
         if checkpoint is not None:
             test_log.set_state(checkpoint)
-        
+        '''
+        test_log = {
+            'terminal_reward' : Log('adaptive')
+        }
         return test_log
     
     def observation_to_tensors(self, observation, pad):
@@ -183,7 +203,8 @@ class BreakAndMakeInterface:
         
         if log is not None:
             #log.add_scalar('train/mode_loss', mode_loss, clock[0])
-            log.log(mode_loss=mode_loss)
+            #log.log(mode_loss=mode_loss)
+            log['mode_loss'].log(float(mode_loss))
         
         # table and hand supervision
         for region in 'table', 'hand':
@@ -245,8 +266,10 @@ class BreakAndMakeInterface:
                     #    polarity_loss,
                     #    clock[0],
                     #)
-                    log.log(**{'%s_spatial_loss'%region:spatial_loss})
-                    log.log(**{'%s_polarity_loss'%region:polarity_loss})
+                    #log.log(**{'%s_spatial_loss'%region:spatial_loss})
+                    #log.log(**{'%s_polarity_loss'%region:polarity_loss})
+                    log['%s_spatial_loss'%region].log(float(spatial_loss))
+                    log['%s_polarity_loss'%region].log(float(polarity_loss))
         
         # shape and color loss
         i = y['insert_i'].view(-1)
@@ -267,11 +290,13 @@ class BreakAndMakeInterface:
                 if log is not None:
                     #log.add_scalar(
                     #   'train/%s_loss'%region, region_loss, clock[0])
-                    log.log(**{'%s_loss'%region:region_loss})
+                    #log.log(**{'%s_loss'%region:region_loss})
+                    log['%s_loss'%region].log(float(region_loss))
         
         if log is not None:
             #log.add_scalar('train/total_loss', loss, clock[0])
-            log.log(total_loss=loss)
+            #log.log(total_loss=loss)
+            log['total_loss'].log(float(loss))
         
         #print('new loss')
         #print(loss.cpu())

@@ -5,8 +5,6 @@ import numpy
 
 import torch
 
-from conspiracy.log import SynchronousConsecutiveLog
-
 from ltron.gym.envs.ltron_env import async_ltron, sync_ltron
 from ltron.gym.envs.break_and_make_env import (
     BreakAndMakeEnvConfig, BreakAndMakeEnv)

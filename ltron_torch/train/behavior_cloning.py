@@ -13,6 +13,8 @@ from torch.nn.functional import cross_entropy, binary_cross_entropy_with_logits
 
 from splendor.image import save_image
 
+from conspiracy.plot import plot_logs
+
 from ltron.config import Config
 from ltron.dataset.paths import get_dataset_info
 from ltron.gym.rollout_storage import RolloutStorage
@@ -87,9 +89,18 @@ def behavior_cloning(
                 interface,
                 train_log,
             )
-            chart = train_log.plot_grid(
-                topline=True, legend=True, minmax_y=True, height=40, width=72)
-            print(chart)
+            #chart = train_log.plot_grid(
+            #    topline=True, legend=True, minmax_y=True, height=40, width=72)
+            #print(chart)
+            for key, log in train_log.items():
+                chart = plot_logs(
+                    {key:log},
+                    border='line',
+                    legend=True,
+                    min_max_y=True,
+                    colors={key:'RED'}
+                )
+                print(chart)
         
         checkpoint_freq = config.checkpoint_frequency
         if checkpoint_freq and epoch % checkpoint_freq == 0:
@@ -115,10 +126,19 @@ def behavior_cloning(
         
         if test:
             test_episodes(config, epoch, episodes, interface, test_log)
-            test_log.step()
-            chart = test_log.plot_sequential(
-                legend=True, minmax_y=True, height=60, width=160)
-            print(chart)
+            #test_log.step()
+            #chart = test_log.plot_sequential(
+            #    legend=True, minmax_y=True, height=60, width=160)
+            #print(chart)
+            for key, log in test_log.items():
+                chart = plot_logs(
+                    {key:log},
+                    border='line',
+                    legend=True,
+                    min_max_y=True,
+                    colors={key:'GREEN'},
+                )
+                print(chart)
         
         if visualize:
             visualize_episodes(config, epoch, episodes, interface)
@@ -169,7 +189,7 @@ def train_epoch(
         scheduler.step()
         optimizer.step()
         
-        train_log.step()
+        #train_log.step()
 
 def rollout_epoch(
     epoch,
@@ -311,7 +331,8 @@ def test_episodes(config, epoch, episodes, interface, test_log):
         avg_terminal_reward /= n
     
     print('Average Terminal Reward: %f'%avg_terminal_reward)
-    test_log.log(terminal_reward=avg_terminal_reward)
+    #test_log.log(terminal_reward=avg_terminal_reward)
+    test_log['terminal_reward'].log(avg_terminal_reward)
     
     if n:
         bin_percent = [b/n for b in reward_bins]
@@ -370,7 +391,9 @@ def save_checkpoint(
         'model' : model.state_dict(),
         'optimizer' : optimizer.state_dict(),
         'scheduler' : scheduler.state_dict(),
-        'train_log' : train_log.get_state(),
-        'test_log' : test_log.get_state(),
+        #'train_log' : train_log.get_state(),
+        'train_log' : {key:log.get_state() for key, log in train_log.items()},
+        #'test_log' : test_log.get_state(),
+        'test_log' : {key:log.get_state() for key, log in test_log.items()},
     }
     torch.save(checkpoint, path)
