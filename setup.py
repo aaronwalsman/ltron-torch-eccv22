@@ -6,9 +6,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ltron-torch-eccv22",
-    version="0.0.0",
+    version="0.0.1",
     install_requires = [
-        'ltron', 'tqdm', 'numpy', 'pyquaternion', 'tensorboard'],
+        'ltron', 'tqdm', 'numpy', 'pyquaternion', 'tensorboard', 'conspiracy'],
     author="Aaron Walsman",
     author_email="aaronwalsman@gmail.com",
     description='LTRON Torch Experiments"',
